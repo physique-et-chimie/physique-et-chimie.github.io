@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Maille cubique simple</title>
+<style>
+  body {
+    margin: 0;
+    background: white;
+    text-align: center;
+    font-family: Arial;
+  }
+  h2 {
+    margin: 15px;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>Maille cubique simple (rotation interactive)</h2>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+
+// === Scene ===
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
+
+// === Camera ===
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(3,3,5);
+
+// === Renderer ===
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight*0.8);
+document.body.appendChild(renderer.domElement);
+
+// === Controls (rotation souris) ===
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// === Lumière ===
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5,5,5);
+scene.add(light);
+
+// === Géométrie cube ===
+const cubeGeometry = new THREE.BoxGeometry(2,2,2);
+const edges = new THREE.EdgesGeometry(cubeGeometry);
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+const cube = new THREE.LineSegments(edges, lineMaterial);
+scene.add(cube);
+
+// === Atomes (sphères aux sommets) ===
+const sphereGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0x3498db });
+
+const positions = [
+  [-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1],
+  [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]
+];
+
+positions.forEach(pos => {
+  const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  sphere.position.set(pos[0], pos[1], pos[2]);
+  scene.add(sphere);
+});
+
+// === Animation loop ===
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
