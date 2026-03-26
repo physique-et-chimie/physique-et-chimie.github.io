@@ -1,40 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Maille cubique simple</title>
-
-<style>
-  body {
-    margin: 0;
-    background: white;
-    font-family: Arial;
-    text-align: center;
-  }
-
-  h2 {
-    margin: 15px 0;
-  }
-
-  #container {
-    width: 100%;
-    height: 600px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  canvas {
-    display: block;
-  }
-</style>
-</head>
-
-<body>
-
-<h2>Maille cubique simple</h2>
-<div id="container"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
@@ -56,17 +19,20 @@ container.appendChild(renderer.domElement);
 
 // Lumières
 scene.add(new THREE.AmbientLight(0xaaaaaa));
-
 const light = new THREE.PointLight(0xffffff, 1);
 light.position.set(5,5,5);
 scene.add(light);
+
+// === GROUPE PRINCIPAL ===
+const lattice = new THREE.Group();
+scene.add(lattice);
 
 // Cube
 const geometry = new THREE.BoxGeometry(2,2,2);
 const edges = new THREE.EdgesGeometry(geometry);
 const material = new THREE.LineBasicMaterial({ color: 0x000000 });
 const cube = new THREE.LineSegments(edges, material);
-scene.add(cube);
+lattice.add(cube);
 
 // Atomes
 const sphereGeometry = new THREE.SphereGeometry(0.2, 32, 32);
@@ -80,20 +46,17 @@ const positions = [
 positions.forEach(pos => {
   const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
   sphere.position.set(...pos);
-  scene.add(sphere);
+  lattice.add(sphere);
 });
 
-// Animation douce
+// Animation
 function animate() {
   requestAnimationFrame(animate);
-  cube.rotation.y += 0.01;
-  cube.rotation.x += 0.005;
+  lattice.rotation.y += 0.01;
+  lattice.rotation.x += 0.005;
   renderer.render(scene, camera);
 }
 
 animate();
 
 </script>
-
-</body>
-</html>
