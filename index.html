@@ -56,6 +56,29 @@
       height: auto;
       border-radius: 4px;
     }
+    .tabs {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.tab {
+  text-decoration: none;
+  color: white;
+  font-weight: 400;
+  padding: 10px 18px;
+  border: 1px solid white;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  background-color: white;
+  color: #111;
+}
+    
   </style>
 </head>
 
@@ -64,14 +87,13 @@
   <div class="container">
 
     <h1>Bienvenue sur le site de Physique et Chimie</h1>
-
-    <p>
-      Prout 💨 ahahah
-    </p>
-
-    <p>
-      🚧 Site en construction 🚧
-    </p>
+    
+    <div class="tabs">
+      <a href="seconde.html" class="tab">Seconde</a>
+      <a href="premiere.html" class="tab">Première</a>
+      <a href="enseignement-scientifique.html" class="tab">Enseignement Scientifique</a>
+      <a href="ressources.html" class="tab">Ressources</a>
+    </div>
 
     <div class="separator"></div>
 
