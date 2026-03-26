@@ -4,21 +4,29 @@
 <meta charset="UTF-8">
 <title>Somme de sinusoïdes</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
 <style>
   body {
     margin: 0;
-    background: #f4f4f4;
-    font-family: Arial;
+    background: white;
+    font-family: Arial, sans-serif;
     text-align: center;
   }
+  h2 {
+    margin-top: 20px;
+  }
   .controls {
-    margin-top: 10px;
+    margin: 15px 0;
   }
   label {
-    margin-right: 10px;
+    margin: 0 15px;
+  }
+  canvas {
+    margin-top: 10px;
   }
 </style>
 </head>
+
 <body>
 
 <h2>Somme de deux sinusoïdes</h2>
@@ -38,6 +46,7 @@
 </div>
 
 <script>
+
 let A1 = 1;
 let T1 = 2;
 
@@ -46,27 +55,79 @@ function setup() {
 }
 
 function draw() {
-  background(240);
+
+  background(255);
   translate(0, height/2);
 
   let A2 = parseFloat(document.getElementById("amp").value);
   let T2 = parseFloat(document.getElementById("period").value);
   let phi = parseFloat(document.getElementById("phase").value);
 
-  stroke(0, 0, 200);
+  // --- Grille légère ---
+  stroke(230);
+  strokeWeight(1);
+  for (let i = 0; i < width; i += 100) {
+    line(i, -height/2, i, height/2);
+  }
+  line(0, 0, width, 0);
+
+  let scaleY = 80;
+
+  // --- Sinus 1 ---
+  stroke(52, 120, 246);  // bleu
   strokeWeight(2);
   noFill();
   beginShape();
-  
+  for (let x = 0; x < width; x++) {
+    let t = map(x, 0, width, 0, 10);
+    let y1 = A1 * sin(TWO_PI/T1 * t);
+    vertex(x, -scaleY * y1);
+  }
+  endShape();
+
+  // --- Sinus 2 ---
+  stroke(255, 140, 0);  // orange
+  strokeWeight(2);
+  beginShape();
+  for (let x = 0; x < width; x++) {
+    let t = map(x, 0, width, 0, 10);
+    let y2 = A2 * sin(TWO_PI/T2 * t + phi);
+    vertex(x, -scaleY * y2);
+  }
+  endShape();
+
+  // --- Somme ---
+  stroke(150, 0, 200);  // violet
+  strokeWeight(3);
+  beginShape();
   for (let x = 0; x < width; x++) {
     let t = map(x, 0, width, 0, 10);
     let y = A1 * sin(TWO_PI/T1 * t)
           + A2 * sin(TWO_PI/T2 * t + phi);
-    vertex(x, -100*y);
+    vertex(x, -scaleY * y);
   }
-  
   endShape();
+
+  // --- Légende ---
+  resetMatrix();
+  fill(0);
+  noStroke();
+  textSize(14);
+  text("Sinus 1 (fixe)", 20, 20);
+  fill(52,120,246);
+  rect(150, 12, 20, 8);
+
+  fill(0);
+  text("Sinus 2 (modifiable)", 200, 20);
+  fill(255,140,0);
+  rect(380, 12, 20, 8);
+
+  fill(0);
+  text("Somme", 430, 20);
+  fill(150,0,200);
+  rect(500, 12, 20, 8);
 }
+
 </script>
 
 </body>
