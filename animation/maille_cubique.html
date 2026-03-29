@@ -59,7 +59,6 @@ camera.position.set(4,4,6);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(width, height);
-renderer.localClippingEnabled = true;
 document.getElementById("container").appendChild(renderer.domElement);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -90,34 +89,39 @@ function createAtoms(contactMode){
 
   clearSpheres();
 
-  const radius = contactMode ? 1 : 0.2;
-
   const positions = [
     [-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1],
     [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]
   ];
 
-const planes = [
-  new THREE.Plane(new THREE.Vector3( 1, 0, 0), 1),
-  new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1),
-  new THREE.Plane(new THREE.Vector3( 0, 1, 0), 1),
-  new THREE.Plane(new THREE.Vector3( 0,-1, 0), 1),
-  new THREE.Plane(new THREE.Vector3( 0, 0, 1), 1),
-  new THREE.Plane(new THREE.Vector3( 0, 0,-1), 1)
-];
-
   positions.forEach(pos => {
 
-    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    let geometry;
 
-    const material = new THREE.MeshPhongMaterial({
-      color: 0x3498db,
-      clippingPlanes: contactMode ? planes : [],
-      clipIntersection: true
-    });
+    if(contactMode){
+      // 1/8 de sphère (octant)
+      geometry = new THREE.SphereGeometry(
+        1,
+        32,
+        32,
+        0, Math.PI/2,
+        0, Math.PI/2
+      );
+    } else {
+      geometry = new THREE.SphereGeometry(0.2, 32, 32);
+    }
 
+    const material = new THREE.MeshPhongMaterial({ color: 0x3498db });
     const sphere = new THREE.Mesh(geometry, material);
+
     sphere.position.set(...pos);
+
+    // Orientation correcte vers l’intérieur
+    if(contactMode){
+      sphere.rotation.x = pos[1] > 0 ? Math.PI : 0;
+      sphere.rotation.y = pos[0] > 0 ? Math.PI : 0;
+      sphere.rotation.z = pos[2] > 0 ? Math.PI : 0;
+    }
 
     lattice.add(sphere);
     spheres.push(sphere);
