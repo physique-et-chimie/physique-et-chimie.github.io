@@ -59,6 +59,7 @@ camera.position.set(4,4,6);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(width, height);
+renderer.localClippingEnabled = true;
 document.getElementById("container").appendChild(renderer.domElement);
 
 // Contrôle souris
@@ -81,10 +82,10 @@ const edges = new THREE.EdgesGeometry(cubeGeom);
 const lineMat = new THREE.LineBasicMaterial({ color: 0x000000 });
 lattice.add(new THREE.LineSegments(edges, lineMat));
 
-// Matériau sphères
-const sphereMat = new THREE.MeshPhongMaterial({ color: 0x3498db });
+// ==========================
+// GESTION DES ATOMES
+// ==========================
 
-// Stockage
 let spheres = [];
 
 function clearSpheres(){
@@ -92,65 +93,64 @@ function clearSpheres(){
   spheres = [];
 }
 
-function createAtoms(portionMode){
+function createAtoms(contactMode){
 
   clearSpheres();
 
-  const radius = portionMode ? 1 : 0.2;
+  const radius = contactMode ? 1 : 0.2;
 
   const positions = [
     [-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1],
     [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]
   ];
 
+  const planes = [
+    new THREE.Plane(new THREE.Vector3( 1, 0, 0), 1),
+    new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1),
+    new THREE.Plane(new THREE.Vector3( 0, 1, 0), 1),
+    new THREE.Plane(new THREE.Vector3( 0,-1, 0), 1),
+    new THREE.Plane(new THREE.Vector3( 0, 0, 1), 1),
+    new THREE.Plane(new THREE.Vector3( 0, 0,-1), 1)
+  ];
+
   positions.forEach(pos => {
 
-    const sphereGeom = new THREE.SphereGeometry(radius, 32, 32);
-    const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+    const geometry = new THREE.SphereGeometry(radius, 32, 32);
+    const material = new THREE.MeshPhongMaterial({ color: 0x3498db });
 
+    if(contactMode){
+      material.clippingPlanes = planes;
+      material.clipIntersection = true;
+    }
+
+    const sphere = new THREE.Mesh(geometry, material);
     sphere.position.set(...pos);
 
-    if(portionMode){
-      // Intersection géométrique avec le cube
-      const boxGeom = new THREE.BoxGeometry(2,2,2);
-      const boxMesh = new THREE.Mesh(boxGeom);
-
-      const bspSphere = CSG.fromMesh(sphere);
-      const bspBox = CSG.fromMesh(boxMesh);
-
-      const intersect = bspSphere.intersect(bspBox);
-      const result = CSG.toMesh(intersect, sphere.matrix, sphere.material);
-
-      lattice.add(result);
-      spheres.push(result);
-    } else {
-      lattice.add(sphere);
-      spheres.push(sphere);
-    }
+    lattice.add(sphere);
+    spheres.push(sphere);
 
   });
 
 }
 
-// ⚠️ Bibliothèque CSG pour vraie intersection
-const script = document.createElement('script');
-script.src = "https://cdn.jsdelivr.net/gh/manthrax/THREE-CSGMesh/three-csg.js";
-document.head.appendChild(script);
+// Initialisation
+createAtoms(false);
 
-script.onload = () => {
-  createAtoms(false);
+// Case à cocher
+document.getElementById("portionTouch").addEventListener("change", function(){
+  createAtoms(this.checked);
+});
 
-  document.getElementById("portionTouch").addEventListener("change", function(){
-    createAtoms(this.checked);
-  });
-};
+// ==========================
+// RENDER LOOP
+// ==========================
 
-// Render
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
+
 animate();
 
 </script>
