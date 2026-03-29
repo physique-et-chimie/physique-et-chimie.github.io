@@ -13,8 +13,8 @@
   }
 
   .wrapper {
-    width: 800px;        /* largeur réduite */
-    margin: 20px auto;   /* centré */
+    width: 800px;
+    margin: 20px auto;
   }
 
   .controls {
@@ -33,9 +33,9 @@
 <div class="wrapper">
 
   <div class="controls">
-    <label><input type="checkbox" id="touching"> Atomes qui se touchent</label>
-    <label style="margin-left:20px;">
-      <input type="checkbox" id="portion"> Portion dans la maille uniquement
+    <label>
+      <input type="checkbox" id="portionTouch">
+      Atomes en contact (portion dans la maille)
     </label>
   </div>
 
@@ -59,14 +59,13 @@ camera.position.set(4,4,6);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(width, height);
-renderer.localClippingEnabled = true;
 document.getElementById("container").appendChild(renderer.domElement);
 
-// Contrôles souris
+// Contrôle souris
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-// Lumières
+// Lumière
 scene.add(new THREE.AmbientLight(0xaaaaaa));
 const light = new THREE.PointLight(0xffffff, 1);
 light.position.set(5,5,5);
@@ -76,20 +75,28 @@ scene.add(light);
 const lattice = new THREE.Group();
 scene.add(lattice);
 
-// Cube
-const geometry = new THREE.BoxGeometry(2,2,2);
-const edges = new THREE.EdgesGeometry(geometry);
-const material = new THREE.LineBasicMaterial({ color: 0x000000 });
-lattice.add(new THREE.LineSegments(edges, material));
+// Cube (arêtes)
+const cubeGeom = new THREE.BoxGeometry(2,2,2);
+const edges = new THREE.EdgesGeometry(cubeGeom);
+const lineMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+lattice.add(new THREE.LineSegments(edges, lineMat));
 
-// Sphères
+// Matériau sphères
+const sphereMat = new THREE.MeshPhongMaterial({ color: 0x3498db });
+
+// Stockage
 let spheres = [];
 
-function createSpheres(radius){
+function clearSpheres(){
   spheres.forEach(s => lattice.remove(s));
   spheres = [];
+}
 
-  const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+function createAtoms(portionMode){
+
+  clearSpheres();
+
+  const radius = portionMode ? 1 : 0.2;
 
   const positions = [
     [-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1],
@@ -97,55 +104,53 @@ function createSpheres(radius){
   ];
 
   positions.forEach(pos => {
-    const mat = new THREE.MeshPhongMaterial({ color: 0x3498db });
-    const sphere = new THREE.Mesh(sphereGeometry, mat);
+
+    const sphereGeom = new THREE.SphereGeometry(radius, 32, 32);
+    const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+
     sphere.position.set(...pos);
-    lattice.add(sphere);
-    spheres.push(sphere);
+
+    if(portionMode){
+      // Intersection géométrique avec le cube
+      const boxGeom = new THREE.BoxGeometry(2,2,2);
+      const boxMesh = new THREE.Mesh(boxGeom);
+
+      const bspSphere = CSG.fromMesh(sphere);
+      const bspBox = CSG.fromMesh(boxMesh);
+
+      const intersect = bspSphere.intersect(bspBox);
+      const result = CSG.toMesh(intersect, sphere.matrix, sphere.material);
+
+      lattice.add(result);
+      spheres.push(result);
+    } else {
+      lattice.add(sphere);
+      spheres.push(sphere);
+    }
+
   });
+
 }
 
-createSpheres(0.2);
+// ⚠️ Bibliothèque CSG pour vraie intersection
+const script = document.createElement('script');
+script.src = "https://cdn.jsdelivr.net/gh/manthrax/THREE-CSGMesh/three-csg.js";
+document.head.appendChild(script);
 
-// Atomes qui se touchent
-document.getElementById("touching").addEventListener("change", function(){
-  createSpheres(this.checked ? 1 : 0.2);
-});
+script.onload = () => {
+  createAtoms(false);
 
-// Portion réellement contenue dans la maille
-document.getElementById("portion").addEventListener("change", function(){
+  document.getElementById("portionTouch").addEventListener("change", function(){
+    createAtoms(this.checked);
+  });
+};
 
-  const planes = [
-    new THREE.Plane(new THREE.Vector3( 1, 0, 0), 1),
-    new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1),
-    new THREE.Plane(new THREE.Vector3( 0, 1, 0), 1),
-    new THREE.Plane(new THREE.Vector3( 0,-1, 0), 1),
-    new THREE.Plane(new THREE.Vector3( 0, 0, 1), 1),
-    new THREE.Plane(new THREE.Vector3( 0, 0,-1), 1)
-  ];
-
-  if(this.checked){
-    spheres.forEach(s => {
-      s.material.clippingPlanes = planes;
-      s.material.clipIntersection = true;
-      s.material.needsUpdate = true;
-    });
-  } else {
-    spheres.forEach(s => {
-      s.material.clippingPlanes = null;
-      s.material.needsUpdate = true;
-    });
-  }
-
-});
-
-// Render loop
+// Render
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
-
 animate();
 
 </script>
