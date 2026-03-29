@@ -59,6 +59,7 @@ camera.position.set(4,4,6);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(width, height);
+renderer.localClippingEnabled = true;
 document.getElementById("container").appendChild(renderer.domElement);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -78,15 +79,6 @@ const edges = new THREE.EdgesGeometry(cubeGeom);
 const lineMat = new THREE.LineBasicMaterial({ color: 0x000000 });
 lattice.add(new THREE.LineSegments(edges, lineMat));
 
-// --- Cube masque invisible (clé du fonctionnement) ---
-const maskMaterial = new THREE.MeshBasicMaterial({
-  colorWrite: false,
-  depthWrite: true
-});
-const maskCube = new THREE.Mesh(cubeGeom, maskMaterial);
-scene.add(maskCube);
-
-// Gestion sphères
 let spheres = [];
 
 function clearSpheres(){
@@ -105,19 +97,32 @@ function createAtoms(contactMode){
     [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]
   ];
 
+  // Plans du cube x = ±1, y = ±1, z = ±1
+  const planes = [
+    new THREE.Plane(new THREE.Vector3( 1, 0, 0), -1),
+    new THREE.Plane(new THREE.Vector3(-1, 0, 0), -1),
+    new THREE.Plane(new THREE.Vector3( 0, 1, 0), -1),
+    new THREE.Plane(new THREE.Vector3( 0,-1, 0), -1),
+    new THREE.Plane(new THREE.Vector3( 0, 0, 1), -1),
+    new THREE.Plane(new THREE.Vector3( 0, 0,-1), -1)
+  ];
+
   positions.forEach(pos => {
 
     const geometry = new THREE.SphereGeometry(radius, 32, 32);
-    const material = new THREE.MeshPhongMaterial({ color: 0x3498db });
+
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x3498db,
+      clippingPlanes: contactMode ? planes : [],
+      clipIntersection: true
+    });
 
     const sphere = new THREE.Mesh(geometry, material);
     sphere.position.set(...pos);
 
     lattice.add(sphere);
     spheres.push(sphere);
-
   });
-
 }
 
 createAtoms(false);
