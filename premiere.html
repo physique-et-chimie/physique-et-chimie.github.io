@@ -1,76 +1,137 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Physique et Chimie</title>
+<meta charset="UTF-8">
+<title>Maille cubique simple</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
-
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: linear-gradient(180deg, #0f0f0f, #1c1c1c);
-      color: white;
-      font-family: 'Montserrat', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .container {
-      width: 90%;
-      max-width: 1100px;
-      text-align: center;
-      padding: 40px;
-    }
-
-    .animation-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 40px;
-      }
-
-    h1 {
-      font-weight: 300;
-      letter-spacing: 3px;
-      margin-bottom: 15px;
-    }
-
-    p {
-      font-weight: 300;
-      margin: 10px 0;
-    }
-
-    .separator {
-      width: 60%;
-      height: 2px;
-      background-color: white;
-      margin: 30px auto 40px auto;
-      opacity: 0.8;
-    }
-
-    
-  </style>
+<style>
+  body {
+    margin: 0;
+    background: white;
+    text-align: center;
+    font-family: Arial;
+  }
+  h2 { margin: 15px 0; }
+  #container { width: 100%; height: 600px; }
+  .controls { margin-bottom: 10px; }
+</style>
 </head>
 
 <body>
 
-  <div class="container">
+<h2>Maille cubique simple</h2>
 
-    <h1>Première de Physique et Chimie</h1>
+<div class="controls">
+  <label><input type="checkbox" id="touching"> Atomes qui se touchent</label>
+  <label style="margin-left:20px;">
+    <input type="checkbox" id="portion"> Portion dans la maille uniquement
+  </label>
+</div>
 
-    <div class="separator"></div>
+<div id="container"></div>
 
-    <div class="animation-container">
-      <iframe src="animation/maille_cubique.html"
-          width="100%"
-          height="650"
-          style="border:none;">
-      </iframe>
-    </div>
-    
-  </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+
+const container = document.getElementById("container");
+const width = container.clientWidth;
+const height = 600;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
+
+const camera = new THREE.PerspectiveCamera(45, width/height, 0.1, 1000);
+camera.position.set(4,4,6);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(width, height);
+renderer.localClippingEnabled = true;
+container.appendChild(renderer.domElement);
+
+// Contrôles souris
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// Lumières
+scene.add(new THREE.AmbientLight(0xaaaaaa));
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5,5,5);
+scene.add(light);
+
+// Groupe principal
+const lattice = new THREE.Group();
+scene.add(lattice);
+
+// Cube
+const geometry = new THREE.BoxGeometry(2,2,2);
+const edges = new THREE.EdgesGeometry(geometry);
+const material = new THREE.LineBasicMaterial({ color: 0x000000 });
+lattice.add(new THREE.LineSegments(edges, material));
+
+// Gestion des sphères
+let spheres = [];
+
+function createSpheres(radius){
+  spheres.forEach(s => lattice.remove(s));
+  spheres = [];
+
+  const sphereGeometry = new THREE.SphereGeometry(radius, 32, 32);
+  const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0x3498db });
+
+  const positions = [
+    [-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1],
+    [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]
+  ];
+
+  positions.forEach(pos => {
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial.clone());
+    sphere.position.set(...pos);
+    lattice.add(sphere);
+    spheres.push(sphere);
+  });
+}
+
+// sphères initiales
+createSpheres(0.2);
+
+// Checkbox : atomes qui se touchent
+document.getElementById("touching").addEventListener("change", function(){
+  if(this.checked){
+    createSpheres(1);   // rayon grand
+  } else {
+    createSpheres(0.2); // rayon normal
+  }
+});
+
+// Checkbox : portion dans la maille
+document.getElementById("portion").addEventListener("change", function(){
+  if(this.checked){
+    spheres.forEach(s => {
+      s.material.clippingPlanes = [
+        new THREE.Plane(new THREE.Vector3(-1,0,0), 1),
+        new THREE.Plane(new THREE.Vector3(0,-1,0), 1),
+        new THREE.Plane(new THREE.Vector3(0,0,-1), 1)
+      ];
+      s.material.clipIntersection = true;
+    });
+  } else {
+    spheres.forEach(s => {
+      s.material.clippingPlanes = null;
+    });
+  }
+});
+
+// Animation
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+</script>
 
 </body>
 </html>
