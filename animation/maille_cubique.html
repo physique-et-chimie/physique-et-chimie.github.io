@@ -105,12 +105,12 @@ function createAtoms(contactMode){
   ];
 
   const planes = [
-    new THREE.Plane(new THREE.Vector3( 1, 0, 0), 1),
     new THREE.Plane(new THREE.Vector3(-1, 0, 0), 1),
-    new THREE.Plane(new THREE.Vector3( 0, 1, 0), 1),
+    new THREE.Plane(new THREE.Vector3( 1, 0, 0), 1),
     new THREE.Plane(new THREE.Vector3( 0,-1, 0), 1),
-    new THREE.Plane(new THREE.Vector3( 0, 0, 1), 1),
-    new THREE.Plane(new THREE.Vector3( 0, 0,-1), 1)
+    new THREE.Plane(new THREE.Vector3( 0, 1, 0), 1),
+    new THREE.Plane(new THREE.Vector3( 0, 0,-1), 1),
+    new THREE.Plane(new THREE.Vector3( 0, 0, 1), 1)
   ];
 
   positions.forEach(pos => {
